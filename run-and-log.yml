@@ -1,0 +1,37 @@
+name: 每10秒运行并记录日志
+
+on:
+  schedule:
+    # 每10秒运行一次 (注意：Cron 最小粒度是分钟，10秒需要换一种方式，下面有说明)
+    # 这里先用每1分钟示例，完整方案见下文
+    - cron:  '* * * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  run-and-log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 运行你的应用并实时保存日志
+        run: |
+          # 创建日志目录
+          mkdir -p logs
+          
+          # 生成带时间戳的日志文件名
+          LOG_FILE="logs/run-$(date +'%Y%m%d-%H%M%S').log"
+          
+          # 运行你的应用 (替换 `your-command` 为实际命令)
+          echo "开始运行应用: $(date)" | tee -a "$LOG_FILE"
+          your-command >> "$LOG_FILE" 2>&1
+          echo "运行结束: $(date)" | tee -a "$LOG_FILE"
+          
+          # 输出日志内容（可选）
+          cat "$LOG_FILE"
+
+      - name: 上传日志作为构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: 运行日志
+          path: logs/*.log
